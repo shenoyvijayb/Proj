@@ -273,7 +273,73 @@ def ExpectationValue(fsoperarray_, fockspace_, mat_idx_, evec_):
             del ifsstate
     return ans
     
-            
+#--------------------------------------------------------------------
+# some standard opearators
+#
+DAGGER=1
+NO_DAGGER=-1
+ADD_HERMITIAN=True
+DONT_ADD_HERMITIAN=False
+FERMION='F'
+def DoubleOcc(Mf,U,isite,tag) :
+    D0 = FockSpaceOperator(Mf,U,DONT_ADD_HERMITIAN,tag)
+    d0oper = EOper(FERMION,Mf,isite,'D',DAGGER,tag)
+    D0.oper_list.append(d0oper)
+    return D0
+
+def Number(Mf,mu,isite,iflv,tag):
+    oer = FockSpaceOperator(Mf,mu,DONT_ADD_HERMITIAN,tag)
+    eroper = EOper(FERMION,iflv,isite,'N',DAGGER,tag)
+    oer.oper_list.append(eroper)
+    return oer
+
+def Hop(Mf,t,isite,jsite,iflv,tag):
+    hop = FockSpaceOperator(Mf,t,ADD_HERMITIAN,tag)
+    destroy_i = EOper(FERMION,iflv,isite,'C',NO_DAGGER,tag)
+    create_j = EOper(FERMION,iflv,jsite,'C',DAGGER,tag)
+    hop.oper_list.append(destroy_i)
+    hop.oper_list.append(create_j)
+    return hop
+
+#-------------this works only for Mf=2-------------------------
+def SdotS(Mf,Jex,isite,jsite,tag):
+    if not Mf==2:
+        print("SdoS defined only for Mf=2, not for MF =", Mf)
+        exit()
+    UP=0
+    DN=1
+    sdots = []
+
+    niupnjup = FockSpaceOperator(Mf,Jex/4.e0,DONT_ADD_HERMITIAN,tag)
+    niupnjup.oper_list.append(EOper(FERMION,UP,isite,'N',DAGGER,tag))
+    niupnjup.oper_list.append(EOper(FERMION,UP,jsite,'N',DAGGER,tag))
+    sdots.append(niupnjup)
+
+    niupnjdn = FockSpaceOperator(Mf,-Jex/4.e0,DONT_ADD_HERMITIAN,tag)
+    niupnjdn.oper_list.append(EOper(FERMION,UP,isite,'N',DAGGER,tag))
+    niupnjdn.oper_list.append(EOper(FERMION,DN,jsite,'N',DAGGER,tag))
+    sdots.append(niupnjdn)
+
+    nidnnjup = FockSpaceOperator(Mf,-Jex/4.e0,DONT_ADD_HERMITIAN,tag)
+    nidnnjup.oper_list.append(EOper(FERMION,DN,isite,'N',DAGGER,tag))
+    nidnnjup.oper_list.append(EOper(FERMION,UP,jsite,'N',DAGGER,tag))
+    sdots.append(nidnnjup)
+    
+    nidnnjdn = FockSpaceOperator(Mf,Jex/4.e0,DONT_ADD_HERMITIAN,tag)
+    nidnnjdn.oper_list.append(EOper(FERMION,DN,isite,'N',DAGGER,tag))
+    nidnnjdn.oper_list.append(EOper(FERMION,DN,jsite,'N',DAGGER,tag))
+    sdots.append(nidnnjdn)
+
+    sipsjm = FockSpaceOperator(Mf,Jex/2.e0,ADD_HERMITIAN,tag)
+    sipsjm.oper_list.append(EOper(FERMION,UP,jsite,'C',NO_DAGGER,tag))
+    sipsjm.oper_list.append(EOper(FERMION,DN,jsite,'C',DAGGER,tag))
+    sipsjm.oper_list.append(EOper(FERMION,DN,isite,'C',NO_DAGGER,tag))
+    sipsjm.oper_list.append(EOper(FERMION,UP,isite,'C',DAGGER,tag))
+    sdots.append(sipsjm)
+
+    return sdots
+    
+    
 #--------------------------------------------------------------------
 # main code 
 fermiN=2             #number of states per site for fermions
@@ -420,41 +486,26 @@ fst.print()
 
 ham = []
 #set hubbard U
-U=6
+U=1000
 for isite in range(0,2):
-    D0 = FockSpaceOperator(Mf,U,False,'D')
-    d0oper = EOper('F',Mf,isite,'D',1,'D')
-    D0.oper_list.append(d0oper)
-    D0.print()
-    ham.append(D0)
-    del D0
-#set er
-er=1 
+    ham.append(DoubleOcc(Mf,U,isite,'D'))
+
+    #set er
+er=40 
 for isite in range(2,4):
     for iflv in range(0,Mf):
-        oer = FockSpaceOperator(Mf,er,False,'R')
-        eroper = EOper('F',iflv,isite,'N',1,'R')
-        oer.oper_list.append(eroper)
-        oer.print()
-        ham.append(oer)
-        del oer
+        ham.append(Number(Mf,er,isite,iflv,'R'))
+
 #set kinetic energy
-t=np.pi
-tr=np.pi
-tp=np.pi
+t=1
+tr=0
+tp=0
 thop_ar = [t,tp,tr,tp]
 for isite in range(0,4):
     jsite = (isite+1)%4
     for iflv in range(0,Mf):
-        hop = FockSpaceOperator(Mf,-thop_ar[isite],True,'H')
-        destroy_i = EOper('F',iflv,isite,'C',-1,'H')
-        create_j = EOper('F',iflv,jsite,'C',1,'H')
-        hop.oper_list.append(destroy_i)
-        hop.oper_list.append(create_j)
-        
-        ham.append(hop)
-        del destroy_i
-        del create_j
+        ham.append(Hop(Mf,-thop_ar[isite], isite, jsite, iflv, 'H'))
+
     
 for fsoper in ham:
     print("=====================================")
@@ -493,9 +544,16 @@ eig,evs = la.eigh(hmat)
 print(eig)
 
 gs = evs[:,0]
-print(gs)
+##print(gs)
 
 print(ExpectationValue(ham, fockspace, mat_idx, gs))
+
+sdots01 = SdotS(Mf,1+0j,0,1,'S')
+print(ExpectationValue(sdots01, fockspace, mat_idx, gs))
+
+gs = evs[:,1]
+print(ExpectationValue(sdots01, fockspace, mat_idx, gs))
+
 
 #print(evs)
 
