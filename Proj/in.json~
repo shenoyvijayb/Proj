@@ -1,0 +1,9 @@
+{
+    "casename"  : "two_site_hubbard",
+    "t"         : 1.0e0,
+    "tp"        : 0.0e0,
+    "tR"        : 0.0e0,
+    "eR"        : 80.0e0,
+    "U"         : 100.0e0,
+    "nparticles": [1,1]
+}

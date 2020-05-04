@@ -1,15 +1,7 @@
-from __future__ import print_function
-
 import copy
 import numpy as np
 from scipy.special import comb
 from numpy import linalg as la
-import json
-from pprint import pprint
-import sys
-import os
-import os.path
-
 
 class bcolors:
     HEADER = '\033[95m'
@@ -347,68 +339,66 @@ def SdotS(Mf,Jex,isite,jsite,tag):
 
     return sdots
     
-
-
-
+    
 #--------------------------------------------------------------------
-# main code for 4 sites bilayer nickelate
-casename="test"
-U=10.e0
-t=1.e0
-tp=0.1e0
-tR=1.e0
-eR=2.e0
-nparticles = [1,1]
-num_outp_states =2
-
-#------------------------read input if it is there
-if(len(sys.argv) > 1) :
-    runpfile = sys.argv[1]
-    with open(runpfile) as runp_file:
-        runpdata = json.load(runp_file)
-        pprint(runpdata)
-        for key in runpdata:
-            if (key == 'casename') :
-                casename = runpdata['casename']
-            elif (key == 'U' ):
-                U = runpdata['U']
-            elif (key == 't' ):
-                t = runpdata['t']
-            elif (key == 'tp'):
-                tp = runpdata['tp']
-            elif (key == 'tR'):
-                tR = runpdata['tR']
-            elif (key == 'eR'):
-                eR = runpdata['eR']
-            elif (key == 'nparticles') :
-                nparticles = runpdata['nparticles']
-            elif (key == 'num_outp_states') :
-                num_outp_states = runpdata['num_outp_states']
-
-#----------------------echo input
-print(" ")
-print("****BILAYER NICKELATE****")
-print("  casename    : ", casename)
-print("         t    = ", t)
-print("         tp   = ", tp)
-print("         tR   = ", tR)
-print("         eR   = ", eR)
-print("         U    = ", U)
-print(" nparticles   = ", nparticles)
-print("output states = ", num_outp_states)
-
-print(" ")
-  
-
+# main code 
 fermiN=2             #number of states per site for fermions
 Mf=2
 nsites = 4
+nparticles = [1,1]
 n_all_states = fermiN**nsites
 n_fock_space_states = n_all_states**Mf
+#nstates = comb(nsites,nparticles,True)
+#print(nstates)
+print(n_fock_space_states)
 
+#exit()
 
+for istate in range(0,n_all_states):
+    fconfig = np.zeros(nsites,dtype=np.int)
+    print(istate)
+    number_to_baseN_string(istate,fermiN,nsites,fconfig)
+    print(fconfig, " ", number_of_fermions(fconfig), " ",
+          baseN_string_to_number(fermiN, fconfig),
+          np.int(sign_of_c(fconfig,3)))
+                        
 
-#-------------set up fock space ------------------------------------
+statenum = int(0.3927*n_all_states)
+print(statenum)
+fs1 = FermionState(nsites, statenum)
+print("fs1")
+fs1.print()
+print(fs1.fermiN)
+fs2 = copy.deepcopy(fs1)
+fs2.print()
+fs2.Fconfig[0] = 1
+fs2.print()
+fs1.print()
+fs2.isZero=True
+fs2.print()
+fs1.print()
+
+print("fs1 ", fs1.statenum(), fs1.num_fermions())
+print("fs2 ", fs2.statenum(), fs2.num_fermions())
+
+fs1.print()
+for isite in range(0,nsites):
+    print(fs1.CdagC_Op(isite))
+
+fs=FermionState(nsites, 0)
+fs.print()
+for isite in range(0,nsites):
+    fs.Cdagger_Op(isite,1)
+    print(" ")
+    print("Created fermion at ", isite)
+    fs.print()
+
+for isite in range(nsites-1,-1,-1):
+    fs.Cdagger_Op(isite,-1)
+    print(" ")
+    print("Destroyed fermion at ", isite)
+    fs.print()
+
 fstatenum = np.zeros(Mf,dtype=np.int)
 fockspace = {}
 for ifstate in range(0,n_fock_space_states):
@@ -418,40 +408,109 @@ for ifstate in range(0,n_fock_space_states):
     for i in range(0,Mf):
         fnum.append(fsstate.FermState[i].num_fermions())
     if fnum == nparticles :
+        print(" Hilbstate ")
         fockspace[ifstate] = fsstate
+        print(ifstate, fstatenum)
     else :
         del fsstate
 print("Dimension of Fock Space : ", len(fockspace))
 
 
+#print(fockspace)
+
+#exit()
+
+#for fstate in fockspace:
+#    print("==================================================")
+#    print(fstate,fockspace[fstate].fock_state_number())
+#    fockspace[fstate].print()
+
 n_dim_fs = len(fockspace)
 statelist = list(fockspace.keys())
-print("statelist", statelist)
+print(statelist)
 mat_idx = {}
 for i in range(0,len(statelist)):
     mat_idx[statelist[i]] = i
-print("mat_idx", mat_idx)
+print(mat_idx)
 
+fst = fockspace[statelist[1]]
+fst.print()
 
-#-------------setup hamiltonian operator----------------------------
+# for isite in range(0,nsites):
+#     print(" ")
+#     print(bcolors.FAIL+"------------New Site-------------"+bcolors.ENDC)
+#     for iflv in range(0,Mf):
+#         print(" ")
+#         print("--------------------------------------------------------")
+#         print("Operator acting at site ", isite, "on flavor", iflv)
+
+#         st = copy.deepcopy(fst)
+#         print(">>-----------Before number ")
+#         st.print()
+#         num = st.CdagC_Op(isite,iflv)
+#         print("number operator acting at site ", isite, "on flavor", iflv)
+#         print(bcolors.OKGREEN+">>------- value of number operator "+bcolors.ENDC, num)
+
+#         print(bcolors.WARNING+"Creation Operator acting at site "+bcolors.ENDC, isite, "on flavor", iflv)
+#         st.Cdagger_Op(isite, iflv, 1)
+
+#         st.print()
+#         del st
+        
+#         st = copy.deepcopy(fst)
+#         print("----------------")
+#         st.print()
+#         print(bcolors.HEADER+"Annihilation Operator acting at site "+bcolors.ENDC, isite, "on flavor", iflv)
+#         st.Cdagger_Op(isite, iflv, -1)
+#         st.print()
+#         del st
+        
+        
+#     print(">>---------------Double Occupancy at site ")
+#     fst.print()
+#     docc=fst.Prod_CdagC_Op(isite)
+#     print(bcolors.OKBLUE+">>------- value of double occupancy "+bcolors.ENDC, "at site",isite, " is ", docc)
+    
+
+# U=1
+# Isite=0
+# D0 = FockSpaceOperator(Mf,U,False,'D')
+# d0oper = EOper('F',Mf,Isite,'D',1,'D')
+# D0.oper_list.append(d0oper)
+# D0.print()
+# Isite=1
+# D1 = FockSpaceOperator(Mf,U,False,'D')
+# d1oper = EOper('F',Mf,Isite,'D',1,'D')
+# D1.oper_list.append(d1oper)
+# D1.print()
+
 ham = []
-#set hubbard U operator
+#set hubbard U
+U=1000
 for isite in range(0,2):
     ham.append(DoubleOcc(Mf,U,isite,'D'))
 
-#set eR operator
+    #set er
+er=40 
 for isite in range(2,4):
     for iflv in range(0,Mf):
-        ham.append(Number(Mf,eR,isite,iflv,'R'))
+        ham.append(Number(Mf,er,isite,iflv,'R'))
 
-#set kinetic energy operator
-thop_ar = [t,tp,tR,tp]
+#set kinetic energy
+t=1
+tr=0
+tp=0
+thop_ar = [t,tp,tr,tp]
 for isite in range(0,4):
     jsite = (isite+1)%4
     for iflv in range(0,Mf):
         ham.append(Hop(Mf,-thop_ar[isite], isite, jsite, iflv, 'H'))
 
-#-------------set up hamiltonian matrix-----------------------------
+    
+for fsoper in ham:
+    print("=====================================")
+    fsoper.print()
+
 
 hmat = np.zeros((n_dim_fs,n_dim_fs), np.cdouble)
     
@@ -463,118 +522,53 @@ for fsoper in ham:
         if  not ifsstate.isZero :
             jsnum = ifsstate.fock_state_number()
             j = mat_idx[jsnum]
+
+            print(i,j)
+
+            if i == j :
+                print("-----------------------------------")
+                fsoper.print()
+
             mat_elem = factor*fsoper.coeff   
             hmat[j,i] += mat_elem
             if fsoper.hermitian :
                 hmat[i,j] += np.conj(mat_elem)
         del ifsstate
+
+##print(hmat)
                 
 eig,evs = la.eigh(hmat)
 
-
-#---------------output expectation values---------------------------
-
 #gs = np.zeros(n_dim_fs,np.cdouble)
 
-#print(eig)
+print(eig)
 
-for iopstate in range(0,num_outp_states):
-    gs = evs[:,iopstate]
-    ##print(gs)
-
-    keystr = ""
-    outpstr = ""
-    keystr += (" t " + " tp " + " tR " + " eR " + " U ")
-    outpstr += (" %14.6E"%(t) + " %14.6E"%(tp) + " %14.6E"%(tR) + " %14.6E"%(eR)  + " %14.6E"%(U)  )
-
-    keystr += " E "
-    outpstr += (" %25.15E"%(eig[iopstate]))
-
-    keystr += " Eex "
-    outpstr += (" %25.15E"%(eig[iopstate]-eig[0]))
-    
-    mean_num =  np.zeros(nsites,dtype=np.double)
-    mean_dble_occ = np.zeros(nsites,dtype=np.double)
-    mean_sdots = np.zeros((nsites, nsites),dtype=np.double)
-
-    for isite in range(0,nsites):
-        tmp_mean_num = 0.e0
-        for iflv in range(0,Mf):
-            num = [Number(Mf,1+0j,isite,iflv,'N')]
-            tmp_mean_num += np.real(ExpectationValue(num, fockspace, mat_idx, gs))
-        mean_num[isite] = tmp_mean_num
-            
-        dble_occ = [DoubleOcc(Mf,1+0j,isite,'D')]
-        mean_dble_occ[isite] =  np.real(ExpectationValue(dble_occ,
-                                                         fockspace, mat_idx, gs))
-        for jsite in range(isite,nsites) :
-            sdots_oper = SdotS(Mf,1+0j,isite,jsite,'S')
-            tmp_mean_sdots = np.real(ExpectationValue(sdots_oper,
-                                                               fockspace,
-                                                               mat_idx, gs))
-            mean_sdots[isite,jsite] = tmp_mean_sdots
-            if jsite > isite :
-                mean_sdots[jsite,isite] = tmp_mean_sdots
-            
-            
-    for isite in range(0,nsites):
-        keystr += (" N"+"%0d"%(isite))
-        outpstr += " %25.15E"%(mean_num[isite])
-
-
-    for isite in range(0,nsites):
-        keystr += (" D"+"%0d"%(isite))
-        outpstr += " %25.15E"%(mean_dble_occ[isite])
-
-    for isite in range(0,nsites):
-        for jsite in range(isite,nsites):
-            keystr += (" SdS"+"%0d"%(isite)+"%0d"%(jsite))
-            outpstr += " %25.15E"%(mean_sdots[isite,jsite])
-    
-    keystr += (" Stot2"+ " Stot")
-    stot2 = np.sum(mean_sdots)
-    stot = (-1.e0 + np.sqrt(1.e0 + 4.e0*stot2))/2.e0
-    outpstr += (" %25.15E"%(stot2) + " %25.15E"%(stot))
-            
-            
-    # print("----------------------------------------------")
-    # print(" Eigenstate ", iopstate)
-    # print("double occ")
-    # print(mean_dble_occ)
-    # print("sdots")
-    # print(mean_sdots)
-    # print("s_tot = ", np.sum(mean_sdots))
-
-    # print(keystr)
-    # print(outpstr)
-
-    filestub = casename + "_out"+"%02d"%(iopstate)
-    keyfp = open(filestub+".key",'w')
-    print(keystr,file=keyfp)
-    keyfp.close()
-    outfp = open(filestub+".plt",'w')
-    print(outpstr,file=outfp)
-    outfp.close()
-
-exit()
-    
-
+gs = evs[:,0]
+##print(gs)
 
 print(ExpectationValue(ham, fockspace, mat_idx, gs))
 
-sdots00 = SdotS(Mf,1+0j,0,0,'S')
 sdots01 = SdotS(Mf,1+0j,0,1,'S')
-print("gs")
-mean_sdots00 = np.real(ExpectationValue(sdots00, fockspace, mat_idx, gs))
-mean_sdots01 = np.real(ExpectationValue(sdots01, fockspace, mat_idx, gs))
-print(mean_sdots00, mean_sdots01, 2.e0*(mean_sdots00 + mean_sdots01))
+print(ExpectationValue(sdots01, fockspace, mat_idx, gs))
 
-
-print("ex 1")
 gs = evs[:,1]
-mean_sdots00 = np.real(ExpectationValue(sdots00, fockspace, mat_idx, gs))
-mean_sdots01 = np.real(ExpectationValue(sdots01, fockspace, mat_idx, gs))
-print(mean_sdots00, mean_sdots01, 2.e0*(mean_sdots00 + mean_sdots01))
+print(ExpectationValue(sdots01, fockspace, mat_idx, gs))
+
+
+#print(evs)
+
+exit()
+
+for istate in statelist:
+    print(bcolors.OKBLUE+" State : "+bcolors.ENDC, istate)
+
+    fockspace[istate].print()
+    st = copy.deepcopy(fockspace[istate])
+    coeff = D0.act_on(st)
+    print("coeff = ", coeff)
+    st.print()
+    print(st.fock_state_number())
+
 
 
 
