@@ -1,0 +1,11 @@
+{
+"casename"  : "short",
+    "U" : 10.0e0,
+    "t" : 1.0e0,
+    "tp" :0.24e0,
+    "tR" : 1.0e0,
+    "eR" : 2.0e0,
+    "nparticles" : [2,2],
+    "num_outp_states" :12,
+    "use_lapack_diag" : True
+}

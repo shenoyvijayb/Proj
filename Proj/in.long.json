@@ -1,0 +1,11 @@
+{
+    "casename"  : "long",
+    "U" : 10.0e0,
+    "t" : 1.0e0,
+    "tp" :0.24e0,
+    "tR" : 1.0e0,
+    "eR" : 2.0e0,
+    "nparticles" : [4,4],
+    "num_outp_states" :12,
+    "use_lapack_diag" : false
+}

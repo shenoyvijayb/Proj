@@ -26,23 +26,26 @@ class bcolors:
 #--------------------------------------------------------------------
 # main code for 4 sites bilayer nickelate
 runcasename="junk.run.junk"
-num_outp_states=2
+num_outp_states=12
+U=6.e0
+tp = 0.2e0
+np=4
 runpcard = { 'casename': runcasename,
-             'U':0.e0,
+             'U':U,
              't':1.e0,
-             'tp':0.0e0,
-             'tR':1.0e0,
-             'eR':1000.e0,
-             'nparticles': [1,1],
+             'tp':tp,
+             'tR':1.e0,
+             'eR':0.e0,
+             'nparticles': [np,np],
              'num_outp_states':num_outp_states
 }
 
 
-Ustart = 0.e0
-Uend = 100.e0
-nU = 10
-dU = (Uend-Ustart)/np.double(nU)
-casename="hub2site"
+eRstart = 0.e0
+eRend = 12.e0
+neR = 150 
+deR = (eRend-eRstart)/neR
+casename="biL4site"+"_U"+"%3.1f"%(U)+"_tp"+"%3.1f"%(tp)+"_np"+"%0d"%(np)
 jin_file ="junk."+casename+".json.jnk"
 opfilename = []
 pltfilename = []
@@ -59,13 +62,13 @@ print(opfilename)
 print(keyfilename)
 print(pltfilename)
 print(first_time)
-for iU in range(0,nU+1):
+for ieR in range(0,neR+1):
     tmpprint = runpcard
-    tmpprint['U'] = Ustart + np.double(iU)*dU
+    tmpprint['eR'] = eRstart + ieR*deR
     with open(jin_file, 'w') as writefile:
         json.dump(tmpprint,writefile)
-    rcmd = "python3 nickbiL2site.py "+ jin_file
-    print("Running U = ", tmpprint['U'])
+    rcmd = "python3 nickbiL4site.py "+ jin_file
+    print("Running eR = ", tmpprint['eR'])
     os.system(rcmd)
     for iop in range(0,num_outp_states):
         if first_time[iop]:

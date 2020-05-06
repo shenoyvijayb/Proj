@@ -27,8 +27,8 @@ class bcolors:
 # main code for 4 sites bilayer nickelate
 runcasename="junk.run.junk"
 num_outp_states=6
-U=6.e0
-tp = 1.e-5
+U=9.e0
+tp = 1.0e0
 runpcard = { 'casename': runcasename,
              'U':U,
              't':1.e0,
@@ -44,7 +44,7 @@ eRstart = 0.e0
 eRend = 20.e0
 neR = 1000
 deR = (eRend-eRstart)/np.double(neR)
-casename="biL4site"+"_U"+"%3.1f"%(U)+"_tp"+"%3.1f"%(tp)
+casename="biL2site"+"_U"+"%3.1f"%(U)+"_tp"+"%3.1f"%(tp)
 jin_file ="junk."+casename+".json.jnk"
 opfilename = []
 pltfilename = []
@@ -66,7 +66,7 @@ for ieR in range(0,neR+1):
     tmpprint['eR'] = eRstart + np.double(ieR)*deR
     with open(jin_file, 'w') as writefile:
         json.dump(tmpprint,writefile)
-    rcmd = "python3 fermion.py "+ jin_file
+    rcmd = "python3 nickbiL2site.py "+ jin_file
     print("Running eR = ", tmpprint['eR'])
     os.system(rcmd)
     for iop in range(0,num_outp_states):
