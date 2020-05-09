@@ -30,6 +30,41 @@ num_outp_states=12
 U=6.e0
 tp = 0.2e0
 np=4
+eRstart = 0.e0
+eRend = 12.e0
+neR = 150
+num_outp_states=12
+
+#------------------------read input if it is there
+if(len(sys.argv) > 1) :
+    runpfile = sys.argv[1]
+    with open(runpfile) as runp_file:
+        runpdata = json.load(runp_file)
+        pprint(runpdata)
+        for key in runpdata:
+            if (key == 'casename') :
+                runcasename = runpdata['runcasename']
+            elif (key == 'U' ):
+                U = runpdata['U']
+            elif (key == 'tp' ):
+                tp = runpdata['tp']
+            elif (key == 'np'):
+                np = runpdata['np']
+            elif (key == 'tR'):
+                tR = runpdata['tR']
+            elif (key == 'eRstart'):
+                eRstart = runpdata['eRstart']
+            elif (key == 'eRend'):
+                eRend = runpdata['eRend']
+            elif (key == 'neR'):
+                neR = runpdata['neR']
+            elif (key == 'num_outp_states'):
+                num_outp_states = runpdata['num_outp_states']
+
+
+
+
+
 runpcard = { 'casename': runcasename,
              'U':U,
              't':1.e0,
@@ -41,10 +76,15 @@ runpcard = { 'casename': runcasename,
 }
 
 
-eRstart = 0.e0
-eRend = 12.e0
-neR = 150 
+
+print(runpcard)
+print("eRstart : ", eRstart, "eRend : ", eRend, "neR : ", neR)
+
+
+
 deR = (eRend-eRstart)/neR
+
+
 casename="biL4site"+"_U"+"%3.1f"%(U)+"_tp"+"%3.1f"%(tp)+"_np"+"%0d"%(np)
 jin_file ="junk."+casename+".json.jnk"
 opfilename = []

@@ -1,0 +1,7 @@
+{
+  "np" : 2,
+  "eRstart" : 0.0e0,
+  "eRend" : 12.0e0,
+  "neR" : 10,
+  "num_outp_states" : 2
+}
